@@ -1,13 +1,15 @@
+
+from rest_framework import pagination
+from .serializers import FoodHubSerializer
+from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import pagination
-from .models import FoodhubModel
-from .serializers import FoodHubSerializer
+from rest_framework import status
 from datetime import datetime, timedelta
 from django.utils.timezone import make_aware
-from django.db import connection
-from django.utils import timezone
-from datetime import timedelta
+from collections import defaultdict
+from .models import FoodhubModel
+
 
 class CustomPagination(pagination.PageNumberPagination):
     page_size = 10
@@ -184,3 +186,49 @@ class YearlyBreakdownView(APIView):
             })
 
         return Response(results)
+
+
+
+
+
+
+# views.py
+
+class Foodhub10DayStatsView(APIView):
+    def get(self, request, *args, **kwargs):
+        year = request.query_params.get('year')
+        postcode = request.query_params.get('postcode')
+
+        # if not year or not postcode:
+        #     return Response({"error": "Please provide 'year' and 'postcode'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            year = int(year)
+            start_date = make_aware(datetime(year, 1, 1))
+            end_date = make_aware(datetime(year + 1, 1, 1))
+        except:
+            return Response({"error": "Invalid year format."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Step 1: Query once for all records in year/postcode
+        records = FoodhubModel.objects.filter(
+            postcode__startswith=postcode,
+            last_update__gte=start_date,
+            last_update__lt=end_date
+        ).only('last_update')
+
+        # Step 2: Count per day
+        counts_per_day = defaultdict(int)
+        for obj in records:
+            day = obj.last_update.date()
+            counts_per_day[day] += 1
+
+        # Step 3: Build result with all 365 days
+        result = []
+        for i in range((end_date - start_date).days):
+            day = (start_date + timedelta(days=i)).date()
+            result.append({
+                'date': day,
+                'count': counts_per_day.get(day, 0)
+            })
+
+        return Response(result, status=status.HTTP_200_OK)
