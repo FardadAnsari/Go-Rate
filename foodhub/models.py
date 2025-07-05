@@ -1,10 +1,9 @@
 from django.db import models
-from django_mongodb_backend.fields import ArrayField
-
-
+from django_mongodb_backend.fields import ObjectIdAutoField
 
 
 class FoodhubModel(models.Model):
+    id = ObjectIdAutoField(primary_key=True)
     address = models.CharField(max_length=255)
     apple_pay = models.CharField(max_length=255)
     card_payment = models.CharField(max_length=255)
@@ -37,3 +36,12 @@ class FoodhubModel(models.Model):
         return f"phone"
 
 
+
+
+class CachedYearlyStats(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    id = ObjectIdAutoField(primary_key=True)
+    data = models.JSONField()  # store the 36-point response as JSON
+
+    # class Meta:
+    #     db_table = 'cachedyearlystats'

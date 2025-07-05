@@ -1,7 +1,9 @@
 from django.db import models
+from django_mongodb_backend.fields import ObjectIdAutoField
 
 
 class JustEat(models.Model):
+    id = ObjectIdAutoField(primary_key=True)
     last_update = models.DateTimeField()
     shop_id_company = models.CharField(max_length=20, unique=True)
     shop_url_company = models.CharField(max_length=200)

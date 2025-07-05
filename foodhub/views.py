@@ -5,9 +5,9 @@ from .models import FoodhubModel
 from .serializers import FoodHubSerializer
 from datetime import datetime, timedelta
 from django.utils.timezone import make_aware
-from django.db import connection
 from django.utils import timezone
-from datetime import timedelta
+
+from .models import CachedYearlyStats
 
 class CustomPagination(pagination.PageNumberPagination):
     page_size = 10
@@ -164,8 +164,8 @@ class YearlyBreakdownView(APIView):
     def get(self, request):
         end_date = timezone.now()
         start_date = end_date - timedelta(days=365)
+        interval_days = 365 // 36  # ≈10-day buckets
 
-        interval_days = 365 // 36  # ≈10 days
         results = []
 
         for i in range(36):
@@ -177,6 +177,17 @@ class YearlyBreakdownView(APIView):
                 last_update__lt=period_end
             ).count()
 
+            # Step back if count is zero
+            search_date = period_end - timedelta(days=1)
+            while count == 0 and search_date >= period_start:
+                count = FoodhubModel.objects.filter(
+                    last_update__date=search_date.date()
+                ).count()
+                if count > 0:
+                    period_end = search_date + timedelta(days=1)  # Update to when we found data
+                    break
+                search_date -= timedelta(days=1)
+
             results.append({
                 "period_start": period_start.date(),
                 "period_end": period_end.date(),
@@ -184,3 +195,11 @@ class YearlyBreakdownView(APIView):
             })
 
         return Response(results)
+
+
+class CachedStatsView(APIView):
+    def get(self, request):
+        cache = CachedYearlyStats.objects.last()
+        if cache:
+            return Response(cache.data)
+        return Response({"error": "No stats available"}, status=404)
