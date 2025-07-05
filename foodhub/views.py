@@ -6,6 +6,8 @@ from .serializers import FoodHubSerializer
 from datetime import datetime, timedelta
 from django.utils.timezone import make_aware
 from django.db import connection
+from django.utils import timezone
+from datetime import timedelta
 
 class CustomPagination(pagination.PageNumberPagination):
     page_size = 10
@@ -153,3 +155,32 @@ class FoodHubView(APIView):
         serializer = FoodHubSerializer(paginated_queryset, many=True)
 
         return paginator.get_paginated_response(serializer.data, extra_data=extra_data)
+
+
+
+
+
+class YearlyBreakdownView(APIView):
+    def get(self, request):
+        end_date = timezone.now()
+        start_date = end_date - timedelta(days=365)
+
+        interval_days = 365 // 36  # ≈10 days
+        results = []
+
+        for i in range(36):
+            period_start = start_date + timedelta(days=i * interval_days)
+            period_end = period_start + timedelta(days=interval_days)
+
+            count = FoodhubModel.objects.filter(
+                last_update__gte=period_start,
+                last_update__lt=period_end
+            ).count()
+
+            results.append({
+                "period_start": period_start.date(),
+                "period_end": period_end.date(),
+                "count": count
+            })
+
+        return Response(results)
