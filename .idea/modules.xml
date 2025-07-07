@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/GoRate.iml" filepath="$PROJECT_DIR$/.idea/GoRate.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../Sale-Cold-call-Django-backend/.idea/Sale-Cold-call-Django-backend.iml" filepath="$PROJECT_DIR$/../Sale-Cold-call-Django-backend/.idea/Sale-Cold-call-Django-backend.iml" />
     </modules>
   </component>
 </project>
