@@ -2,5 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Audio2text" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Sale-Cold-call-Django-backend" vcs="Git" />
   </component>
 </project>

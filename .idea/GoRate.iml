@@ -19,6 +19,9 @@
     <orderEntry type="jdk" jdkName="Python 3.10 (GoRateFardad)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="Sale-Cold-call-Django-backend" />
+    <orderEntry type="module" module-name="Microphone-recorder-test" />
+    <orderEntry type="module" module-name="Audio2text" />
+    <orderEntry type="module" module-name="zoho-api" />
   </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_CONFIGURATION" value="Django" />

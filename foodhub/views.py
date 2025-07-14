@@ -194,13 +194,24 @@ class YearlyBreakdownView(APIView):
 
 # views.py
 
-class Foodhub10DayStatsView(APIView):
+
+
+class FoodhubDailyCountView(APIView):
     def get(self, request, *args, **kwargs):
         year = request.query_params.get('year')
+        city = request.query_params.get('city')
         postcode = request.query_params.get('postcode')
 
-        # if not year or not postcode:
-        #     return Response({"error": "Please provide 'year' and 'postcode'."}, status=status.HTTP_400_BAD_REQUEST)
+        if not year:
+            return Response({"error": "Please provide 'year'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if city and postcode:
+            return Response({"error": "Please provide only one of 'city' or 'postcode', not both."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if not city and not postcode:
+            return Response({"error": "Please provide either 'city' or 'postcode'."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         try:
             year = int(year)
@@ -209,20 +220,21 @@ class Foodhub10DayStatsView(APIView):
         except:
             return Response({"error": "Invalid year format."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Step 1: Query once for all records in year/postcode
-        records = FoodhubModel.objects.filter(
-            postcode__startswith=postcode,
-            last_update__gte=start_date,
-            last_update__lt=end_date
-        ).only('last_update')
+        # Build base queryset
+        queryset = FoodhubModel.objects.filter(last_update__gte=start_date, last_update__lt=end_date)
 
-        # Step 2: Count per day
+        if city:
+            queryset = queryset.filter(county__icontains=city)
+        elif postcode:
+            queryset = queryset.filter(postcode__icontains=postcode)
+
+        # Group by day
         counts_per_day = defaultdict(int)
-        for obj in records:
+        for obj in queryset.only('last_update'):
             day = obj.last_update.date()
             counts_per_day[day] += 1
 
-        # Step 3: Build result with all 365 days
+        # Build result
         result = []
         for i in range((end_date - start_date).days):
             day = (start_date + timedelta(days=i)).date()

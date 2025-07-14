@@ -2,8 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../Audio2text/.idea/Audio2text.iml" filepath="$PROJECT_DIR$/../Audio2text/.idea/Audio2text.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/GoRate.iml" filepath="$PROJECT_DIR$/.idea/GoRate.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../Microphone-recorder-test/.idea/Microphone-recorder-test.iml" filepath="$PROJECT_DIR$/../Microphone-recorder-test/.idea/Microphone-recorder-test.iml" />
       <module fileurl="file://$PROJECT_DIR$/../Sale-Cold-call-Django-backend/.idea/Sale-Cold-call-Django-backend.iml" filepath="$PROJECT_DIR$/../Sale-Cold-call-Django-backend/.idea/Sale-Cold-call-Django-backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../zoho-api/.idea/zoho-api.iml" filepath="$PROJECT_DIR$/../zoho-api/.idea/zoho-api.iml" />
     </modules>
   </component>
 </project>
