@@ -189,11 +189,7 @@ class YearlyBreakdownView(APIView):
 
 
 
-
-
-
 # views.py
-
 
 
 class FoodhubDailyCountView(APIView):
@@ -241,6 +237,70 @@ class FoodhubDailyCountView(APIView):
             result.append({
                 'date': day,
                 'count': counts_per_day.get(day, 0)
+            })
+
+        return Response(result, status=status.HTTP_200_OK)
+
+
+
+
+class FoodhubDeliveryStatusMonthlyStatsView(APIView):
+    def get(self, request, *args, **kwargs):
+        year = request.query_params.get('year')
+        month = request.query_params.get('month')
+        city = request.query_params.get('city')
+        postcode = request.query_params.get('postcode')
+
+        if not year or not month:
+            return Response({"error": "Please provide both 'year' and 'month'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if city and postcode:
+            return Response({"error": "Please provide only one of 'city' or 'postcode', not both."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            year = int(year)
+            month = int(month)
+            start_date = make_aware(datetime(year, month, 1))
+            if month == 12:
+                end_date = make_aware(datetime(year + 1, 1, 1))
+            else:
+                end_date = make_aware(datetime(year, month + 1, 1))
+        except:
+            return Response({"error": "Invalid year or month."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Base query for records in the selected month
+        queryset = FoodhubModel.objects.filter(
+            last_update__gte=start_date,
+            last_update__lt=end_date
+        ).only('last_update', 'store_status_delivery')
+
+        # Apply city or postcode filter (but not both)
+        if city:
+            queryset = queryset.filter(county__icontains=city)
+        elif postcode:
+            queryset = queryset.filter(postcode__icontains=postcode)
+
+        # Grouping by day: open/closed count
+        day_status = defaultdict(lambda: {'open': 0, 'closed': 0})
+
+        for obj in queryset:
+            day = obj.last_update.date()
+            status_value = obj.store_status_delivery.strip().lower()
+            if status_value == "true":
+                day_status[day]['open'] += 1
+            elif status_value == "false":
+                day_status[day]['closed'] += 1
+
+        # Build result
+        num_days = (end_date - start_date).days
+        result = []
+        for i in range(num_days):
+            day = (start_date + timedelta(days=i)).date()
+            result.append({
+                'date': day,
+                'open': day_status[day]['open'],
+                'closed': day_status[day]['closed']
             })
 
         return Response(result, status=status.HTTP_200_OK)
