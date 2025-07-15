@@ -269,38 +269,56 @@ class FoodhubDeliveryStatusMonthlyStatsView(APIView):
         except:
             return Response({"error": "Invalid year or month."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Base query for records in the selected month
+        # Build base queryset
         queryset = FoodhubModel.objects.filter(
             last_update__gte=start_date,
             last_update__lt=end_date
-        ).only('last_update', 'store_status_delivery')
+        ).only('last_update', 'store_status_delivery', 'shop_name')
 
-        # Apply city or postcode filter (but not both)
         if city:
             queryset = queryset.filter(county__icontains=city)
         elif postcode:
             queryset = queryset.filter(postcode__icontains=postcode)
 
-        # Grouping by day: open/closed count
+        # Day-level summary
         day_status = defaultdict(lambda: {'open': 0, 'closed': 0})
+
+        # Shop-level frequency
+        shop_status = defaultdict(lambda: {'open': 0, 'closed': 0})
 
         for obj in queryset:
             day = obj.last_update.date()
             status_value = obj.store_status_delivery.strip().lower()
+            shop = obj.shop_name.strip()
+
             if status_value == "true":
                 day_status[day]['open'] += 1
+                shop_status[shop]['open'] += 1
             elif status_value == "false":
                 day_status[day]['closed'] += 1
+                shop_status[shop]['closed'] += 1
 
-        # Build result
+        # Build daily stats result
         num_days = (end_date - start_date).days
-        result = []
+        daily_stats = []
         for i in range(num_days):
             day = (start_date + timedelta(days=i)).date()
-            result.append({
+            daily_stats.append({
                 'date': day,
                 'open': day_status[day]['open'],
                 'closed': day_status[day]['closed']
             })
 
-        return Response(result, status=status.HTTP_200_OK)
+        # Build shop summary result
+        shop_summary = []
+        for shop_name, stats in shop_status.items():
+            shop_summary.append({
+                'shop_name': shop_name,
+                'open': stats['open'],
+                'closed': stats['closed']
+            })
+
+        return Response({
+            'daily_stats': daily_stats,
+            'shop_summary': shop_summary
+        }, status=status.HTTP_200_OK)
